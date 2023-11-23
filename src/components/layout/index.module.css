@@ -1,0 +1,31 @@
+.content {
+  background-color: #F9FDFF;
+  min-height: calc(100vh - 70px);
+  margin-bottom: 70px;
+}
+
+.footer {
+  height: 70px;
+  display: flex;
+  justify-content: space-around;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  background-color: #fff;
+  border-top: 1px solid #EFEFEF;
+}
+.footer > div {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  color: #667085;
+}
+.footer > div p {
+  margin: 0;
+  font-size: .8rem;
+}
+.footer > div span {
+  font-size: 1.5rem;
+}
