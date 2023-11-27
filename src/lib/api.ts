@@ -1,11 +1,9 @@
 import axios, { Axios, AxiosResponse } from "axios";
 import {
   AuthTokenPresenter,
-  CreateSpeechPayload,
   ErrorResponse,
   IAuthPresenter,
   ProfilePresenter,
-  SpeechPresenter,
   SuccessResponse,
 } from "./api.types";
 import secureCall from "./secureCall";
@@ -153,26 +151,6 @@ export async function refreshToken() {
     storeAccess(res.data.data);
   }
   return res;
-}
-
-export async function getSpeeches() {
-  return get<SpeechPresenter[]>("/speech/list");
-}
-
-export async function createSpeech(data: CreateSpeechPayload) {
-  return post<SpeechPresenter>("/speech/create", data);
-}
-
-export async function updateSpeech(id: string, data: Partial<SpeechPresenter>) {
-  return post<SpeechPresenter>(`/speech/update/${id}`, data);
-}
-
-export async function getSpeech(id: string) {
-  return get<SpeechPresenter>(`/speech/${id}`);
-}
-
-export async function deleteSpeech(id: string) {
-  return deleteRequest<SpeechPresenter>(`/speech/delete/${id}`);
 }
 
 export function swrFetcher<T>(dispatch: any, router: any) {

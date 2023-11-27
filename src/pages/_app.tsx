@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import type { ReactElement, ReactNode } from "react";
 import { AuthProvider } from "@/utils/AuthContext";
+import { WSProvider } from "@/components/ws";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -61,11 +62,15 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           }
         `}
       </style>
-      <ChakraProvider theme={theme}>
-        {
-          router.pathname.startsWith("/dashboard") ? getLayout(<Component {...pageProps} />) : <Component {...pageProps} />
-        }
-      </ChakraProvider>
+      <WSProvider>
+        <ChakraProvider theme={theme}>
+          {router.pathname.startsWith("/dashboard") ? (
+            getLayout(<Component {...pageProps} />)
+          ) : (
+            <Component {...pageProps} />
+          )}
+        </ChakraProvider>
+      </WSProvider>
     </AuthProvider>
   );
 }

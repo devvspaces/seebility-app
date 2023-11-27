@@ -41,29 +41,14 @@ export interface SuccessResponse<T> {
   data: T;
 }
 
-export type LengthType = "TIME" | "WORD";
-
-
-export interface CreateSpeechPayload {
-  speaker: string;
-  title: string;
-  topic: string;
-  story: string;
-  length: number;
-  lengthType: LengthType;
+export interface ChatMessagePresenter {
+  room_name: string;
+  message: string;
+  ai: boolean;
+  created_at: string;
 }
 
-export interface SpeechPresenter {
-  id: string;
-  speaker: string;
-  title: string;
-  topic: string;
-  story: string;
-  length: number;
-  readingTime: number;
-  createdAt: string;
-  updatedAt: string;
-  completedText: string;
-  completionTime: number;
-  lengthType: LengthType;
+
+export interface SpeechToTextPresenter {
+  text: string;
 }

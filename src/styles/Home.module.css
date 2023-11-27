@@ -1,12 +1,12 @@
 .microphone {
   background-color: var(--secondary);
   width: 150px;
-  height: 150px;
+  min-height: 150px;
   color: white;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 50%;
+  border-radius: 50% !important;
   cursor: pointer;
-  font-size: 3rem;
+  font-size: 3rem !important;
 }

@@ -4,9 +4,7 @@ const routes = {
   register: "/register",
   dashboard: "/dashboard",
   profile: "/dashboard/profile",
-  create: "/dashboard/create",
-  edit: "/dashboard/speech",
-  share: "/share"
+  chat: "/dashboard/chat",
 };
 
 export default routes;
