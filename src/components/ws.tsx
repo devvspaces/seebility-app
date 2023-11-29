@@ -17,11 +17,9 @@ function WSProvider({ children }: WSProviderProps): JSX.Element {
   const wsInstance = useMemo(
     () =>
       isBrowser
-        ? new WebSocket(`ws://127.0.0.1:8001/ws/chat/1/`)
-        // ? new WebSocket(`ws://127.0.0.1:8000/ws/chat/${state.user.id}/`)
+        ? new WebSocket(`${process.env.NEXT_PUBLIC_LLM_WS_BASE_URL}/ws/chat/1/`)
         : null,
     []
-    // [state]
   );
 
   useEffect(() => {

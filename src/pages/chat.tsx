@@ -2,16 +2,12 @@ import {
   Box,
   HStack,
   Stack,
-  Center,
-  Image,
   Text,
   Switch,
-  Input,
   useToast,
   Textarea,
 } from "@chakra-ui/react";
 import Head from "next/head";
-import { FaMicrophone } from "react-icons/fa";
 import SpeakerButton from "@/components/speaker";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
 import { useEffect, useState } from "react";
@@ -19,8 +15,7 @@ import { FiMic, FiPaperclip } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import styles from "@/styles/chat.module.css";
 import { useSpeechRecognition } from "react-speech-kit";
-import useSWR from "swr";
-import { getChats, getMediaUrl, speechToText, swrInsecureFetcher } from "@/lib/llmAPI";
+import { getChats, getMediaUrl, speechToText } from "@/lib/llmAPI";
 import { ChatMessagePresenter } from "@/lib/api.types";
 import { useWS } from "@/components/ws";
 import { useRouter } from "next/router";
@@ -100,7 +95,7 @@ export default function Home() {
 
   async function startRecording() {
     // @ts-ignore
-    const rtc: any = await import("../../../node_modules/recordrtc") as any;
+    const rtc: any = await import("../../node_modules/recordrtc") as any;
     const RecordRTC = rtc.default;
     navigator.mediaDevices
       .getUserMedia({ audio: true })
