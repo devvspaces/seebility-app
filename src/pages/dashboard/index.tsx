@@ -108,6 +108,7 @@ function Home() {
   }
 
   async function startRecording() {
+    // @ts-ignore
     const rtc = await import("../../../node_modules/recordrtc");
     const RecordRTC = rtc.default;
     navigator.mediaDevices
