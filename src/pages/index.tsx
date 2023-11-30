@@ -22,20 +22,113 @@ function Home() {
   const ws = useWS();
   const router = useRouter();
 
+  const [current, setCurrent] = useState(
+    "Hey, Double tap your screen! Tell us what you want."
+  );
+
+  function playBase64Audio(base64String: string) {
+    console.log("Playing audio");
+    // Create a new audio element
+    var audio = new Audio();
+
+    // Set the audio source to the Base64 string using a Data URI
+    audio.src = "data:audio/mp3;base64," + base64String;
+
+    // Play the audio
+    audio.play();
+
+    audio.onended = () => {
+      setCurrent("Hey, Double tap your screen! Tell us what you want.");
+    };
+  }
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
   useEffect(() => {
     console.log("Websocket: ", ws);
     if (!ws) return;
-    ws.onmessage = function (e) {
-      const data = JSON.parse(e.data);
-      const message = data.message;
-      if (message) {
-        console.log(message);
+
+    const convertBlobToArrayBuffer = (blob: Blob, callback: any) => {
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        if (fileReader.result instanceof ArrayBuffer) {
+          callback(fileReader.result);
+        }
+      };
+      fileReader.readAsArrayBuffer(blob);
+    };
+
+    let context: AudioContext | null;
+    let audioChunks: ArrayBuffer[] = [];
+
+    function play() {
+      if (audioChunks.length > 0 && !playing) {
+        console.log("Playing");
+        console.log(playing);
+        playing = true;
+        console.log("Updated Playing");
+        console.log(playing);
+        let blob = new Blob(audioChunks);
+        // Clear chunks after playing
+        audioChunks = [];
+        let fileReader = new FileReader();
+
+        fileReader.onload = function () {
+          let arrayBuffer = this.result as ArrayBuffer;
+          if (!arrayBuffer) return;
+          if (!context) return;
+          context.decodeAudioData(arrayBuffer, function (buffer) {
+            if (!context) return;
+            let source = context.createBufferSource();
+            console.log("Creating buffer source");
+            if (!source) return;
+            source.buffer = buffer;
+            source.connect(context.destination);
+            source.start(0);
+            console.log("Playing audio");
+            setCurrent("Speaking...");
+            setIsSpeaking(true);
+            
+            source.onended = function () {
+              console.log("Audio ended");
+              playing = false;
+              setIsSpeaking(false);
+              play();
+              // context?.close().then(function () {
+              //   context = null;
+              // });
+            };
+          });
+        };
+
+        fileReader.readAsArrayBuffer(blob);
       }
-      const audio = data.audio;
-      if (audio) {
-        const url = getMediaUrl(audio);
-        const audioEl = new Audio(url);
-        audioEl.play();
+    }
+
+    ws.binaryType = "arraybuffer";
+    let playing = false;
+    ws.onmessage = function (e) {
+      if (typeof e.data === "string") {
+        const data = JSON.parse(e.data);
+        const message = data.message;
+        if (message) {
+          console.log(message);
+        }
+      } else if (e.data instanceof ArrayBuffer) {
+        console.log("Received audio");
+
+        // Receive audio chunk as a Blob
+        let receivedBlob = e.data;
+
+        console.log(receivedBlob.byteLength);
+
+        audioChunks.push(receivedBlob);
+
+        if (!context) {
+          context = new AudioContext();
+        }
+
+        play();
       }
       setWaitingForResponse(false);
     };
@@ -64,6 +157,7 @@ function Home() {
 
       // Send the data to the API
       setTranslating(true);
+      setCurrent("Translating...");
       console.log("sending for translation");
       const response = await speechToText(record);
       console.log(response);
@@ -74,14 +168,7 @@ function Home() {
         const text = response.data.text;
         console.log(text);
 
-        toast({
-          title: "Success",
-          description: "Audio processed successfully",
-          status: "success",
-          duration: 9000,
-          isClosable: true,
-          position: "top",
-        });
+        setCurrent("Thinking...");
 
         // Send the text to the websocket
         ws?.send(
@@ -93,6 +180,7 @@ function Home() {
         // update the state to waiting for response
         setWaitingForResponse(true);
       } else {
+        setCurrent("Hey, Double tap your screen! Tell us what you want.");
         toast({
           title: "Error",
           description: "An error occurred while sending the audio",
@@ -113,6 +201,7 @@ function Home() {
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then(async (stream) => {
+        console.log("got stream");
         const recorder = new RecordRTC(stream, {
           type: "audio",
           mimeType: "audio/webm;codecs=pcm",
@@ -123,6 +212,7 @@ function Home() {
           bufferSize: 4096,
           audioBitsPerSecond: 128000,
         });
+        console.log("recorder created");
         recorder.startRecording();
         setRecorder(recorder);
         setStatus("recording");
@@ -159,7 +249,7 @@ function Home() {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
     if (isRightSwipe) {
-      router.push(routes.chat)
+      router.push(routes.chat);
     }
   };
 
@@ -181,9 +271,7 @@ function Home() {
         </HStack>
 
         <Heading size={"lg"} mt={"2rem"}>
-          Hey, Double tap your screen!
-          <br />
-          Tell us what you want.
+          {current}
         </Heading>
 
         <Center my={"4rem"}>
@@ -196,6 +284,11 @@ function Home() {
             color={"white"}
             className={styles.microphone}
             onClick={async (e) => {
+
+              if (isSpeaking) {
+                return;
+              }
+
               if (status === "recording") {
                 setStatus("stopped");
                 recorder.stopRecording(stopRecording);
@@ -205,7 +298,7 @@ function Home() {
               }
             }}
             isDisabled={translating || waitingForResponse}
-            isLoading={translating}
+            isLoading={translating || waitingForResponse}
           >
             <FaMicrophone />
           </Button>

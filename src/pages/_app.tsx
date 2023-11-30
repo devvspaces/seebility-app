@@ -27,8 +27,6 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
 
   const router = useRouter();
 
-  getLayout = Component.getLayout ?? getLayout;
-
   useEffect(() => {
     const handleStart = (url: string) => {
       NProgress.start();
