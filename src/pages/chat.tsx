@@ -10,7 +10,7 @@ import {
 import Head from "next/head";
 import SpeakerButton from "@/components/speaker";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { FiMic, FiPaperclip } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import styles from "@/styles/chat.module.css";
@@ -20,11 +20,13 @@ import { ChatMessagePresenter } from "@/lib/api.types";
 import { useWS } from "@/components/ws";
 import { useRouter } from "next/router";
 import moment from "moment";
+import Markdown from "react-markdown";
 
 export default function Home() {
   const [isVoice, setIsVoice] = useState(true);
   const [searchValue, setTextValue] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [aiIsSpeaking, setAiIsSpeaking] = useState(false);
   const [dataChats, setDataChats] = useState<ChatMessagePresenter[]>([]);
   const toast = useToast();
 
@@ -95,7 +97,7 @@ export default function Home() {
 
   async function startRecording() {
     // @ts-ignore
-    const rtc: any = await import("../../node_modules/recordrtc") as any;
+    const rtc: any = (await import("../../node_modules/recordrtc")) as any;
     const RecordRTC = rtc.default;
     navigator.mediaDevices
       .getUserMedia({ audio: true })
@@ -127,42 +129,98 @@ export default function Home() {
       });
   }
 
-  function scrollToBottom() {
-    const chat = document.getElementById("chat");
-    if (chat) {
-      chat.scrollTop = chat.scrollHeight;
-    }
-  }
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Function to scroll to the bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    getChats('1').then((res) => {
+    getChats("1").then((res) => {
       setDataChats(res.data);
+      scrollToBottom();
     });
   }, []);
 
   useEffect(() => {
-    console.log("Websocket: ", ws);
     if (!ws) return;
+
+    let context: AudioContext | null;
+    let audioChunks: ArrayBuffer[] = [];
+
+    function play() {
+      if (audioChunks.length > 0 && !playing) {
+        console.log("Playing");
+        console.log(playing);
+        playing = true;
+        console.log("Updated Playing");
+        console.log(playing);
+        let blob = new Blob(audioChunks);
+        // Clear chunks after playing
+        audioChunks = [];
+        let fileReader = new FileReader();
+
+        fileReader.onload = function () {
+          let arrayBuffer = this.result as ArrayBuffer;
+          if (!arrayBuffer) return;
+          if (!context) return;
+          context.decodeAudioData(arrayBuffer, function (buffer) {
+            if (!context) return;
+            let source = context.createBufferSource();
+            console.log("Creating buffer source");
+            if (!source) return;
+            source.buffer = buffer;
+            source.connect(context.destination);
+            source.start(0);
+            console.log("Playing audio");
+            setAiIsSpeaking(true);
+
+            source.onended = function () {
+              console.log("Audio ended");
+              playing = false;
+              setAiIsSpeaking(false);
+              play();
+            };
+          });
+        };
+
+        fileReader.readAsArrayBuffer(blob);
+      }
+    }
+
+    ws.binaryType = "arraybuffer";
+    let playing = false;
     ws.onmessage = function (e) {
-      const data = JSON.parse(e.data);
-      const message = data.message;
-      if (message) {
-        setDataChats((prev) => [
-          ...prev,
-          {
-            message: message,
-            ai: true,
-            room_name: "1",
-            created_at: new Date().toISOString(),
-          },
-        ]);
+      if (typeof e.data === "string") {
+        const data = JSON.parse(e.data);
+        const message = data.message;
+        if (message) {
+          setDataChats((prev) => [
+            ...prev,
+            {
+              message: message,
+              ai: true,
+              room_name: "1",
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        }
+      } else if (e.data instanceof ArrayBuffer) {
+        console.log("Received audio");
+
+        // Receive audio chunk as a Blob
+        let receivedBlob = e.data;
+
+        audioChunks.push(receivedBlob);
+
+        if (!context) {
+          context = new AudioContext();
+        }
+
+        play();
       }
-      const audio = data.audio;
-      if (audio) {
-        const url = getMediaUrl(audio);
-        const audioEl = new Audio(url);
-        audioEl.play();
-      }
+
       setWaitingForResponse(false);
     };
 
@@ -175,9 +233,25 @@ export default function Home() {
     };
   }, [ws]);
 
-  useEffect(() => {
+  function sendMessage() {
+    if (searchValue === "") return;
+    ws?.send(
+      JSON.stringify({
+        message: searchValue,
+      })
+    );
+    setDataChats((prev) => [
+      ...prev,
+      {
+        message: searchValue,
+        ai: false,
+        room_name: "1",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    setTextValue("");
     scrollToBottom();
-  }, [dataChats]);
+  }
 
   return (
     <Box pos={"relative"}>
@@ -202,67 +276,88 @@ export default function Home() {
       <Stack id="chat" padding={"1rem"} spacing={"1rem"} paddingBottom={"5rem"}>
         {dataChats?.map((chat, index) =>
           chat.ai ? (
-            <HStack align={"flex-start"} key={index}>
-              <Box
-                display={"flex"}
-                width={"50px"}
-                height={"50px"}
-                rounded={"full"}
-                justifyContent={"center"}
-                alignItems={"center"}
-                bg={"var(--primary)"}
-                fontWeight={"700"}
-                color={"white"}
-              >
-                S
-              </Box>
-              <Box>
-                <Text mb={2}>Seebility</Text>
+            <Box key={index}>
+              <HStack align={"flex-start"} mb={2} alignItems={"center"}>
                 <Box
-                  w={"250px"}
-                  ml={3}
+                  display={"flex"}
+                  width={"30px"}
+                  height={"30px"}
+                  rounded={"full"}
+                  justifyContent={"center"}
+                  alignItems={"center"}
+                  bg={"var(--primary)"}
+                  fontWeight={"700"}
+                  color={"white"}
+                  fontSize={".8rem"}
+                >
+                  S
+                </Box>
+                <Box>
+                  <Text fontSize={".8rem"}>Seebility</Text>
+                </Box>
+              </HStack>
+              <Box w={"fit-content"} maxW={"350px"}>
+                <Box
                   background={"var(--tertiary)"}
-                  padding={"1.5rem"}
-                  rounded={"1rem"}
+                  padding={"1rem"}
+                  rounded={".6rem"}
                   borderTopLeftRadius={"0"}
                   mb={1}
+                  fontSize={".85rem"}
+                  className={styles.aiMessage}
                 >
-                  {chat.message}
+                  <Markdown>{chat.message}</Markdown>
                 </Box>
                 <Text
                   color={"rgba(121, 124, 123, 0.50)"}
-                  fontSize={".7rem"}
+                  fontSize={".6rem"}
                   textAlign={"right"}
                 >
-                  {moment(chat.created_at).format("hh:mm A")}
+                  {moment(chat.created_at).day() === moment().day() ? (
+                    <>{moment(chat.created_at).format("hh:mm A")}</>
+                  ) : (
+                    <>
+                      {moment(chat.created_at).format(
+                        "ddd, MMM D, YYYY hh:mm A"
+                      )}
+                    </>
+                  )}
                 </Text>
               </Box>
-            </HStack>
+            </Box>
           ) : (
             <Box key={index}>
               <Box
                 ml={"auto"}
-                width={"250px"}
-                textAlign={"right"}
+                w={"fit-content"}
+                maxW={"250px"}
                 background={"var(--primary)"}
                 color={"white"}
-                padding={"1.5rem"}
-                rounded={"1rem"}
+                padding={"1rem"}
+                rounded={".6rem"}
                 borderTopEndRadius={"0"}
                 mb={1}
+                fontSize={".9rem"}
               >
                 {chat.message}
               </Box>
               <Text
                 color={"rgba(121, 124, 123, 0.50)"}
-                fontSize={".7rem"}
+                fontSize={".6rem"}
                 textAlign={"right"}
               >
-                {moment(chat.created_at).format("hh:mm A")}
+                {moment(chat.created_at).day() === moment().day() ? (
+                  <>{moment(chat.created_at).format("hh:mm A")}</>
+                ) : (
+                  <>
+                    {moment(chat.created_at).format("ddd, MMM D, YYYY hh:mm A")}
+                  </>
+                )}
               </Text>
             </Box>
           )
         )}
+        <div ref={messagesEndRef} />
       </Stack>
 
       <Box className={styles.chatInput}>
@@ -272,12 +367,13 @@ export default function Home() {
         <Box pos={"relative"}>
           <Text
             color={"#707070"}
+            opacity={0.5}
             pos={"absolute"}
-            zIndex={1}
             left={"2px"}
             top={"50%"}
             transform={"translateY(-50%)"}
             display={searchValue ? "none" : "block"}
+            className={styles.placeHolder}
           >
             Write a message
           </Text>
@@ -290,25 +386,11 @@ export default function Home() {
             onKeyUp={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                if (searchValue === "") return;
-                ws?.send(
-                  JSON.stringify({
-                    message: searchValue,
-                  })
-                );
-                setDataChats((prev) => [
-                  ...prev,
-                  {
-                    message: searchValue,
-                    ai: false,
-                    room_name: "1",
-                    created_at: new Date().toISOString(),
-                  },
-                ]);
-                setTextValue("");
+                sendMessage();
               }
             }}
             cols={50}
+            isDisabled={aiIsSpeaking}
           />
         </Box>
         <Box
@@ -318,7 +400,7 @@ export default function Home() {
             if (!supported) {
               toast({
                 title:
-                  "Oh no, it looks like your browser doesn't support speech recognition.",
+                  "Your browser doesn't support speech recognition.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -340,22 +422,7 @@ export default function Home() {
           className={styles.send}
           onClick={async (e) => {
             e.preventDefault();
-            if (searchValue === "") return;
-            ws?.send(
-              JSON.stringify({
-                message: searchValue,
-              })
-            );
-            setDataChats((prev) => [
-              ...prev,
-              {
-                message: searchValue,
-                ai: false,
-                room_name: "1",
-                created_at: new Date().toISOString(),
-              },
-            ]);
-            setTextValue("");
+            sendMessage();
           }}
         >
           <IoMdSend />

@@ -62,11 +62,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
       </style>
       <WSProvider>
         <ChakraProvider theme={theme}>
-          {router.pathname.startsWith("/dashboard") ? (
-            getLayout(<Component {...pageProps} />)
-          ) : (
-            <Component {...pageProps} />
-          )}
+          {getLayout(<Component {...pageProps} />)}
         </ChakraProvider>
       </WSProvider>
     </AuthProvider>

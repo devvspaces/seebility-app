@@ -38,3 +38,13 @@
   padding-right: 0 !important;
   height: 40px;
 }
+
+.aiMessage ol, .aiMessage ul {
+  margin-left: 1rem;
+}
+.aiMessage li {
+  margin-bottom: .5rem;
+}
+.aiMessage p {
+  margin-bottom: .5rem;
+}
