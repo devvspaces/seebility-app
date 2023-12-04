@@ -1,22 +1,13 @@
-import SpeakerButton from "@/components/speaker";
-import { DeleteIcon } from "@chakra-ui/icons";
 import { Link } from "@chakra-ui/next-js";
 import {
   Box,
   Button,
-  Center,
   Container,
-  HStack,
   Heading,
-  IconButton,
-  Image,
-  Stack,
   Text,
 } from "@chakra-ui/react";
 import Head from "next/head";
-import { FaAngleDown, FaCheckCircle, FaMinus, FaPlus } from "react-icons/fa";
 import { CiCircleCheck } from "react-icons/ci";
-import { IoIosArrowRoundDown } from "react-icons/io";
 
 export default function Page() {
   return (
