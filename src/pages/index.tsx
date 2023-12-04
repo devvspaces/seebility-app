@@ -26,38 +26,10 @@ function Home() {
     "Hey, Double tap your screen! Tell us what you want."
   );
 
-  function playBase64Audio(base64String: string) {
-    console.log("Playing audio");
-    // Create a new audio element
-    var audio = new Audio();
-
-    // Set the audio source to the Base64 string using a Data URI
-    audio.src = "data:audio/mp3;base64," + base64String;
-
-    // Play the audio
-    audio.play();
-
-    audio.onended = () => {
-      setCurrent("Hey, Double tap your screen! Tell us what you want.");
-    };
-  }
-
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
-    console.log("Websocket: ", ws);
     if (!ws) return;
-
-    const convertBlobToArrayBuffer = (blob: Blob, callback: any) => {
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        if (fileReader.result instanceof ArrayBuffer) {
-          callback(fileReader.result);
-        }
-      };
-      fileReader.readAsArrayBuffer(blob);
-    };
-
     let context: AudioContext | null;
     let audioChunks: ArrayBuffer[] = [];
 
@@ -94,9 +66,6 @@ function Home() {
               playing = false;
               setIsSpeaking(false);
               play();
-              // context?.close().then(function () {
-              //   context = null;
-              // });
             };
           });
         };
@@ -119,8 +88,6 @@ function Home() {
 
         // Receive audio chunk as a Blob
         let receivedBlob = e.data;
-
-        console.log(receivedBlob.byteLength);
 
         audioChunks.push(receivedBlob);
 

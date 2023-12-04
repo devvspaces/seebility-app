@@ -1,7 +1,7 @@
 .content {
   background-color: #F9FDFF;
   min-height: calc(100vh - 70px);
-  margin-bottom: 70px;
+  margin-bottom: calc(70px + 1rem);
 }
 
 .footer {
