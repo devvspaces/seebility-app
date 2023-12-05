@@ -6,6 +6,7 @@ import {
   useMemo,
   useEffect,
   ReactNode,
+  useState,
 } from "react";
 
 type WSProviderProps = { children: ReactNode };
@@ -14,15 +15,30 @@ const WSStateContext = createContext<WebSocket | null>(null);
 
 function WSProvider({ children }: WSProviderProps): JSX.Element {
   const { state } = useAuth();
+  const [count, setCount] = useState(0);
   const wsInstance = useMemo(
     () =>
       isBrowser
-        ? new WebSocket(`${process.env.NEXT_PUBLIC_LLM_WS_BASE_URL}/ws/chat/1/`)
+        ? (console.log(count), new WebSocket(`${process.env.NEXT_PUBLIC_LLM_WS_BASE_URL}/ws/chat/1/`))
         : null,
-    []
+    [count]
   );
 
   useEffect(() => {
+    if (!wsInstance) return;
+
+    wsInstance.onopen = function (e) {
+      console.log("Chat socket opened");
+    };
+
+    wsInstance.onclose = function (e) {
+      console.log("Chat socket closed");
+      // Try to reconnect in 5 seconds
+      setTimeout(() => {
+        console.log("Reconnecting...");
+        setCount((count) => count + 1);
+      }, 5000);
+    };
     return () => {
       if (wsInstance && wsInstance.readyState === WebSocket.OPEN) {
         wsInstance.close();

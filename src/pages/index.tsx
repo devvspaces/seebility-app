@@ -40,6 +40,9 @@ function Home() {
         playing = true;
         console.log("Updated Playing");
         console.log(playing);
+
+        if (audioChunks.length === 0) return;
+
         let blob = new Blob(audioChunks);
         // Clear chunks after playing
         audioChunks = [];

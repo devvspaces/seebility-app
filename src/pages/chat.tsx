@@ -223,14 +223,6 @@ export default function Home() {
 
       setWaitingForResponse(false);
     };
-
-    ws.onopen = function (e) {
-      console.log("Chat socket opened");
-    };
-
-    ws.onclose = function (e) {
-      console.error("Chat socket closed unexpectedly");
-    };
   }, [ws]);
 
   function sendMessage() {
