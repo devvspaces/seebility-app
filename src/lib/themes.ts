@@ -8,7 +8,7 @@ const config : ThemeConfig = {
 
 export const theme = extendTheme({
   fonts: {
-    heading: 'var(--font-main)',
+    heading: 'var(--font-inter)',
     body: 'var(--font-main)',
   },
   config,

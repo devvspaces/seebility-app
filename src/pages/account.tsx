@@ -1,4 +1,5 @@
 import SpeakerButton from "@/components/speaker";
+import routes from "@/lib/routes";
 import { Link } from "@chakra-ui/next-js";
 import {
   Box,
@@ -12,10 +13,14 @@ import {
   Text,
 } from "@chakra-ui/react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { CiCircleCheck } from "react-icons/ci";
 import { FaChevronRight } from "react-icons/fa";
 
 export default function Page() {
+
+  const router = useRouter();
+
   return (
     <Box>
       <Head>
@@ -31,7 +36,7 @@ export default function Page() {
         </HStack>
       </Container>
 
-      <Box height={'calc(100vh - 15rem)'} mb={'-1rem'} bg={'#fff'} boxShadow={'0px 0px 4.9px 0px rgba(0, 0, 0, 0.20);'} pos={'relative'} pt={'10rem'} mt={'8rem'}>
+      <Box height={'calc(100vh - 15rem)'} mb={'-1rem'} bg={'#fff'} boxShadow={'0px 0px 4.9px 0px rgba(0, 0, 0, 0.20);'} pos={'relative'} pt={'10rem'} mt={'8rem'} borderTopEndRadius={'1rem'} borderTopLeftRadius={'1rem'}>
         <Box textAlign={'center'} pos={'absolute'} top={'-4.5rem'} left={'50%'} transform={'translateX(-50%)'}>
           <Image mb={4} src="/img/profile.jpeg" alt="profile" w={'120px'} h={'120px'} rounded={'full'} display={'block'} mx={'auto'} />
           <Text mb={2} fontSize={'1.1rem'}>Akin TheGreat</Text>
@@ -39,7 +44,7 @@ export default function Page() {
         </Box>
 
         <Stack>
-          <HStack justify={'space-between'} px={'1rem'} py={'.5rem'}>
+          <HStack justify={'space-between'} px={'1rem'} py={'.5rem'} onClick={() => router.push(routes.orders)}>
             <Text>My Orders</Text>
             <span>
               <FaChevronRight />
@@ -47,28 +52,28 @@ export default function Page() {
           </HStack>
           <Divider />
           <HStack justify={'space-between'} px={'1rem'} py={'.5rem'}>
-            <Text>Promocodes</Text>
+            <Text>Promo codes</Text>
             <span>
               <FaChevronRight />
             </span>
           </HStack>
           <Divider />
           <HStack justify={'space-between'} px={'1rem'} py={'.5rem'}>
-            <Text>My Orders</Text>
+            <Text>F.A.Q</Text>
             <span>
               <FaChevronRight />
             </span>
           </HStack>
           <Divider />
           <HStack justify={'space-between'} px={'1rem'} py={'.5rem'}>
-            <Text>My Orders</Text>
+            <Text>Delete my account</Text>
             <span>
               <FaChevronRight />
             </span>
           </HStack>
           <Divider />
           <HStack justify={'space-between'} px={'1rem'} py={'.5rem'}>
-            <Text>My Orders</Text>
+            <Text>Sign Out</Text>
             <span>
               <FaChevronRight />
             </span>

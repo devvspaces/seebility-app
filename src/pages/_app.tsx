@@ -11,6 +11,17 @@ import type { NextPage } from "next";
 import type { ReactElement, ReactNode } from "react";
 import { AuthProvider } from "@/utils/AuthContext";
 import { WSProvider } from "@/components/ws";
+import { Roboto, Inter } from 'next/font/google'
+ 
+const roboto = Roboto({
+  weight: ['400', '500', '700', '900'],
+  subsets: ['latin'],
+})
+
+const inter = Inter({
+  weight: ['400', '500', '700', '900'],
+  subsets: ['latin'],
+})
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -52,7 +63,8 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
       <style jsx global>
         {`
           :root {
-            --font-main: Helvetica;
+            --font-main: ${roboto.style.fontFamily};
+            --font-head: ${inter.style.fontFamily};
             --primary: #0970b5;
             --secondary: #66c2ff;
             --tertiary: #eff7fd;
