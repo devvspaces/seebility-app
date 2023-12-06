@@ -41,11 +41,12 @@ function Home() {
         console.log("Updated Playing");
         console.log(playing);
 
-        if (audioChunks.length === 0) return;
+        console.log(audioChunks);
 
-        let blob = new Blob(audioChunks);
+        const buf = audioChunks.shift() as ArrayBuffer;
+        let blob = new Blob([buf]);
         // Clear chunks after playing
-        audioChunks = [];
+        // audioChunks = [];
         let fileReader = new FileReader();
 
         fileReader.onload = function () {
@@ -63,17 +64,27 @@ function Home() {
             console.log("Playing audio");
             setCurrent("Speaking...");
             setIsSpeaking(true);
-            
+
             source.onended = function () {
               console.log("Audio ended");
               playing = false;
               setIsSpeaking(false);
               play();
             };
-          });
+          }, function(err) {
+            playing = false;
+            setIsSpeaking(false);
+            console.log(err)
+            play();
+          } );
         };
 
         fileReader.readAsArrayBuffer(blob);
+      } else {
+        console.error("No audio chunks");
+        playing = false;
+        setIsSpeaking(false);
+        setCurrent("Hey, Double tap your screen! Tell us what you want.");
       }
     }
 
@@ -98,17 +109,11 @@ function Home() {
           context = new AudioContext();
         }
 
-        play();
+        if (!playing) {
+          play()
+        }
       }
       setWaitingForResponse(false);
-    };
-
-    ws.onopen = function (e) {
-      console.log("Chat socket opened");
-    };
-
-    ws.onclose = function (e) {
-      console.error("Chat socket closed unexpectedly");
     };
   }, [ws]);
 
@@ -254,7 +259,6 @@ function Home() {
             color={"white"}
             className={styles.microphone}
             onClick={async (e) => {
-
               if (isSpeaking) {
                 return;
               }
