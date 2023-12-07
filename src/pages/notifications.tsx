@@ -1,3 +1,4 @@
+import SoundAmplitudeBars from "@/components/soundAmplitude/soundAmplitude";
 import SpeakerButton from "@/components/speaker";
 import { Link } from "@chakra-ui/next-js";
 import {
@@ -29,6 +30,8 @@ export default function Page() {
           <SpeakerButton />
         </HStack>
       </Container>
+
+      <SoundAmplitudeBars />
 
       <Box>
         <Heading ml={"2rem"} mb={5} size={"sm"} color={"#344054"}>

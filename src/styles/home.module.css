@@ -10,3 +10,17 @@
   cursor: pointer;
   font-size: 3rem !important;
 }
+
+.soundBars {
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+}
+
+.soundBars .bar {
+  width: 5px;
+  border-radius: 1rem;
+  min-height: 10px;
+}
