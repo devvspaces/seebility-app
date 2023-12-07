@@ -23,13 +23,51 @@ function Home() {
   const router = useRouter();
 
   const [current, setCurrent] = useState(
-    "Hey, Double tap your screen! Tell us what you want."
+    "Hey, Tap your screen! Tell us what you want."
   );
 
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [sentMessage, setSentMessage] = useState(0);
+  const [playedWelcome, setPlayedWelcome] = useState(false);
+  const [playedWaiting, setPlayedWaiting] = useState(false);
+  const [count, setCount] = useState(0);
+
+  function playSound(url: string) {
+    const audio = new Audio(url);
+    audio.play();
+    return audio;
+  }
 
   useEffect(() => {
     if (!ws) return;
+
+    if (!playedWelcome) {
+      const audio = playSound("/voices/welcome.mp3");
+      audio.onended = function () {
+        setPlayedWelcome(true);
+      };
+    }
+
+    setTimeout(() => {
+      console.log("Sent Message count");
+      console.log(sentMessage);
+      if (sentMessage !== 0 && !playedWaiting) {
+        setCount((count) => count + 1);
+        console.log("Playing waiting");
+        console.log(sentMessage);
+        console.log("Time since last sent message:")
+        console.log((Date.now() - sentMessage)/1000)
+        if (count > 5) {
+          const audio = playSound("/voices/wait.mp3");
+          audio.onended = function () {
+            console.log("ended");
+          };
+          setCount(0);
+          setPlayedWaiting(true);
+        }
+      }
+    }, 1000);
+
     let context: AudioContext | null;
     let audioChunks: ArrayBuffer[] = [];
 
@@ -53,30 +91,34 @@ function Home() {
           let arrayBuffer = this.result as ArrayBuffer;
           if (!arrayBuffer) return;
           if (!context) return;
-          context.decodeAudioData(arrayBuffer, function (buffer) {
-            if (!context) return;
-            let source = context.createBufferSource();
-            console.log("Creating buffer source");
-            if (!source) return;
-            source.buffer = buffer;
-            source.connect(context.destination);
-            source.start(0);
-            console.log("Playing audio");
-            setCurrent("Speaking...");
-            setIsSpeaking(true);
+          context.decodeAudioData(
+            arrayBuffer,
+            function (buffer) {
+              if (!context) return;
+              let source = context.createBufferSource();
+              console.log("Creating buffer source");
+              if (!source) return;
+              source.buffer = buffer;
+              source.connect(context.destination);
+              source.start(0);
+              console.log("Playing audio");
+              setCurrent("Speaking...");
+              setIsSpeaking(true);
 
-            source.onended = function () {
-              console.log("Audio ended");
+              source.onended = function () {
+                console.log("Audio ended");
+                playing = false;
+                setIsSpeaking(false);
+                play();
+              };
+            },
+            function (err) {
               playing = false;
               setIsSpeaking(false);
+              console.log(err);
               play();
-            };
-          }, function(err) {
-            playing = false;
-            setIsSpeaking(false);
-            console.log(err)
-            play();
-          } );
+            }
+          );
         };
 
         fileReader.readAsArrayBuffer(blob);
@@ -84,13 +126,20 @@ function Home() {
         console.error("No audio chunks");
         playing = false;
         setIsSpeaking(false);
-        setCurrent("Hey, Double tap your screen! Tell us what you want.");
+        setCurrent("Hey, Tap your screen! Tell us what you want.");
       }
     }
 
     ws.binaryType = "arraybuffer";
     let playing = false;
     ws.onmessage = function (e) {
+      console.log("Got a message from the websocket");
+      console.log(
+        `Time since last sent message: ${
+          (Date.now() - sentMessage) / 1000
+        } seconds}`
+      );
+      setSentMessage(0);
       if (typeof e.data === "string") {
         const data = JSON.parse(e.data);
         const message = data.message;
@@ -110,12 +159,12 @@ function Home() {
         }
 
         if (!playing) {
-          play()
+          play();
         }
       }
       setWaitingForResponse(false);
     };
-  }, [ws]);
+  }, [ws, sentMessage, playedWelcome, count, playedWaiting]);
 
   const toast = useToast();
   const [translating, setTranslating] = useState(false);
@@ -134,7 +183,9 @@ function Home() {
       setTranslating(true);
       setCurrent("Translating...");
       console.log("sending for translation");
+      const startTime = Date.now();
       const response = await speechToText(record);
+      console.log(`Time taken: ${(Date.now() - startTime) / 1000} seconds`);
       console.log(response);
       console.log("received response");
       setTranslating(false);
@@ -146,6 +197,7 @@ function Home() {
         setCurrent("Thinking...");
 
         // Send the text to the websocket
+        setSentMessage(() => Date.now());
         ws?.send(
           JSON.stringify({
             message: text,
@@ -154,8 +206,9 @@ function Home() {
 
         // update the state to waiting for response
         setWaitingForResponse(true);
+        setPlayedWaiting(false);
       } else {
-        setCurrent("Hey, Double tap your screen! Tell us what you want.");
+        setCurrent("Hey, Tap your screen! Tell us what you want.");
         toast({
           title: "Error",
           description: "An error occurred while sending the audio",
@@ -189,6 +242,7 @@ function Home() {
         });
         console.log("recorder created");
         recorder.startRecording();
+        playSound("/voices/recording.wav");
         setRecorder(recorder);
         setStatus("recording");
         console.log("recording");
