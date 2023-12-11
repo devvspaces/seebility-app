@@ -444,7 +444,7 @@ function Home() {
               }
 
               if (status === "recording") {
-                stopRecording(recorder);
+                // stopRecording(recorder);
               } else {
                 await startRecording();
               }
