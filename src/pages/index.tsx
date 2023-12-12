@@ -259,7 +259,7 @@ function Home() {
     setStatus("stopped");
     playSound("/voices/confirmed.wav");
     console.log("stopped");
-    console.log(recorder)
+    console.log(recorder);
     recorder.stopRecording(function () {
       let blob = recorder.getBlob();
       const x = new FileReader();
@@ -456,6 +456,17 @@ function Home() {
           </Button>
         </Center>
 
+        <Box className={styles.soundBars} my={5}>
+          {Array.from({ length: frequencyCount }, (_, index) => (
+            <Box
+              bg={"blue.400"}
+              key={index}
+              ref={(element) => (barsRef.current[index] = element)}
+              className={styles.bar}
+            />
+          ))}
+        </Box>
+
         <Center>
           <Image src="/img/swipe.png" alt="swipe" />
         </Center>
@@ -468,17 +479,6 @@ function Home() {
         >
           Swipe to visualize through chat
         </Text>
-
-        <Box className={styles.soundBars} mt={5}>
-          {Array.from({ length: frequencyCount }, (_, index) => (
-            <Box
-              bg={"blue.400"}
-              key={index}
-              ref={(element) => (barsRef.current[index] = element)}
-              className={styles.bar}
-            />
-          ))}
-        </Box>
       </Box>
     </>
   );
